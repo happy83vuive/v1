@@ -294,6 +294,7 @@ body {
             window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 </head>
 <body class="bg-bgLight text-slate-800 min-h-screen font-sans pb-24 selection:bg-red-200 selection:text-red-700 tet-pattern">
 
@@ -730,9 +731,10 @@ body {
         
         <div id="view-review-detail" class="view-section"><div class="max-w-5xl mx-auto"><div class="flex justify-between mb-8 items-center sticky top-20 z-30 bg-slate-50/95 backdrop-blur py-3 px-2 rounded-2xl border border-transparent"><div class="flex items-center gap-4"><button onclick="loadStudentHistory()" class="w-10 h-10 rounded-xl bg-white border shadow-sm flex items-center justify-center hover:text-primary transition"><i data-lucide="arrow-left"></i></button><h2 class="text-2xl font-black text-slate-800">Chi tiết bài làm</h2></div><div class="text-2xl font-black text-white bg-primary px-6 py-2 rounded-xl shadow-lg shadow-primary/30">Điểm: <span id="review-score"></span></div></div><div id="review-questions-container" class="space-y-6 pb-24"></div></div></div>
 
-        <div id="import-modal" class="hidden fixed inset-0 z-50 modal flex items-center justify-center p-4"><div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-pop"><div class="p-5 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="file-input" width="20"></i> Nhập đề tự động</h3><button onclick="document.getElementById('import-modal').classList.add('hidden')" class="p-2 hover:bg-slate-200 rounded-full"><i data-lucide="x"></i></button></div><div class="p-6 flex-1 overflow-y-auto flex flex-col gap-4"><div class="border-2 border-dashed border-primary/30 bg-primary/5 rounded-2xl p-8 text-center cursor-pointer relative hover:bg-primary/10 transition group"><input type="file" accept=".txt,.docx,.pdf" onchange="handleFileUpload(this)" class="absolute inset-0 opacity-0 cursor-pointer"/>
-<i data-lucide="upload-cloud" class="mx-auto text-primary mb-3 transition group-hover:scale-110" width="40"></i>
-<p class="text-base font-bold text-primary">Kéo thả hoặc Click để tải lên (.docx, .txt, .pdf)</p><p class="text-xs text-slate-500 mt-1">Hỗ trợ nhận diện tự động thông minh</p></div><div class="bg-yellow-50 border border-yellow-100 p-4 rounded-xl text-xs text-yellow-800 space-y-1"><strong>Lưu ý về hình ảnh:</strong><p>• Chức năng nhập file chỉ hỗ trợ văn bản. Để thêm <strong>Hình ảnh</strong>, vui lòng nhập văn bản trước, sau đó dùng nút "Thêm ảnh" hoặc <strong>Dán (Ctrl+V)</strong> trực tiếp vào ô nội dung.</p></div><textarea id="import-text" class="flex-1 p-5 border rounded-xl font-mono text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary outline-none min-h-[300px] resize-none" placeholder="Dán nội dung đề thi vào đây..."></textarea></div><div class="p-5 border-t flex justify-end bg-slate-50"><button onclick="processImport()" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg hover:shadow-indigo-200 flex items-center gap-2"><i data-lucide="wand-2" width="18"></i> Phân tích & Nhập</button></div></div></div>
+        <div id="import-modal" class="hidden fixed inset-0 z-50 modal flex items-center justify-center p-4"><div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-pop"><div class="p-5 border-b flex justify-between items-center bg-slate-50"><h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="file-input" width="20"></i> Nhập đề tự động</h3><button onclick="document.getElementById('import-modal').classList.add('hidden')" class="p-2 hover:bg-slate-200 rounded-full"><i data-lucide="x"></i></button></div><div class="p-6 flex-1 overflow-y-auto flex flex-col gap-4"><div class="border-2 border-dashed border-primary/30 bg-primary/5 rounded-2xl p-8 text-center cursor-pointer relative hover:bg-primary/10 transition group"><input type="file" accept=".txt,.docx,.pdf,.png,.jpg,.jpeg" onchange="handleFileUpload(this)" class="absolute inset-0 opacity-0 cursor-pointer"/>
+<i data-lucide="scan-text" class="mx-auto text-primary mb-3 transition group-hover:scale-110" width="40"></i>
+<p class="text-base font-bold text-primary">Kéo thả hoặc Click tải lên (.docx, .pdf, .png, .jpg)</p>
+<p class="text-xs text-slate-500 mt-1">Đã tích hợp AI nhận diện tự động Đề thi Scan/Ảnh</p></div><div class="bg-yellow-50 border border-yellow-100 p-4 rounded-xl text-xs text-yellow-800 space-y-1"><strong>Lưu ý về hình ảnh:</strong><p>• Chức năng nhập file chỉ hỗ trợ văn bản. Để thêm <strong>Hình ảnh</strong>, vui lòng nhập văn bản trước, sau đó dùng nút "Thêm ảnh" hoặc <strong>Dán (Ctrl+V)</strong> trực tiếp vào ô nội dung.</p></div><textarea id="import-text" class="flex-1 p-5 border rounded-xl font-mono text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary outline-none min-h-[300px] resize-none" placeholder="Dán nội dung đề thi vào đây..."></textarea></div><div class="p-5 border-t flex justify-end bg-slate-50"><button onclick="processImport()" class="px-8 py-3 bg-primary text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg hover:shadow-indigo-200 flex items-center gap-2"><i data-lucide="wand-2" width="18"></i> Phân tích & Nhập</button></div></div></div>
 
        <div id="view-users" class="view-section">
     <div class="max-w-6xl mx-auto"> <div class="flex gap-4 mb-6 items-center">
@@ -1960,51 +1962,105 @@ async function handleFileUpload(i) {
     if (!f) return;
     
     const l = document.getElementById('global-loader');
+    const loaderText = document.querySelector('#global-loader p');
     l.classList.remove('hidden');
 
     try {
+        // TRƯỜNG HỢP 1: NẾU LÀ FILE ẢNH (JPG, PNG) -> DÙNG AI OCR TRỰC TIẾP
+        if (f.name.match(/\.(jpeg|jpg|png)$/i)) {
+            loaderText.innerText = "Đang dùng AI nhận diện ảnh (OCR)... (Lần đầu sẽ tải model mất vài giây)";
+            
+            // Chạy Tesseract OCR ngôn ngữ tiếng Việt ('vie')
+            const { data: { text } } = await Tesseract.recognize(f, 'vie');
+            
+            document.getElementById('import-text').value = text;
+            alert("✅ Nhận diện ảnh thành công! Hãy kiểm tra lại chính tả nhé.");
+            
+            l.classList.add('hidden');
+            loaderText.innerText = "Đang xử lý...";
+            return;
+        }
+
+        // TRƯỜNG HỢP 2: NẾU LÀ FILE PDF
         if (f.name.endsWith('.pdf')) {
             const pdfjs = window['pdfjs-dist/build/pdf'] || window.pdfjsLib;
+            if (!pdfjs) throw new Error("Thư viện PDF chưa tải xong!");
+
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
                     const typedarray = new Uint8Array(e.target.result);
                     const pdf = await pdfjs.getDocument({ data: typedarray }).promise;
                     let fullText = '';
-                    
+                    let usedOCR = false;
+
                     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        loaderText.innerText = `Đang đọc trang ${pageNum}/${pdf.numPages}...`;
                         const page = await pdf.getPage(pageNum);
-                        const textContent = await page.getTextContent();
                         
-                        // Ghép text thông minh dựa trên tọa độ Y để giữ nguyên xuống dòng
-                        let lastY = -1;
+                        // 1. Thử lấy text thông thường trước
+                        const textContent = await page.getTextContent();
                         let pageText = '';
+                        let lastY = -1;
+                        
                         textContent.items.forEach(item => {
                             if (lastY !== -1 && Math.abs(lastY - item.transform[5]) > 5) {
-                                pageText += '\n'; // Xuống dòng nếu lệch tọa độ
+                                pageText += '\n'; 
                             }
                             pageText += item.str;
                             lastY = item.transform[5];
                         });
+
+                        // 2. Nếu không có text (File CamScanner) -> CHUYỂN QUA AI OCR
+                        if (!pageText.trim()) {
+                            usedOCR = true;
+                            loaderText.innerText = `Trang ${pageNum} là ảnh scan. Đang chạy AI OCR... (Sẽ hơi lâu)`;
+                            
+                            // Render trang PDF thành Canvas
+                            const scale = 2.0; // Zoom 2x để AI nhìn chữ rõ hơn
+                            const viewport = page.getViewport({ scale: scale });
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+
+                            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                            // Chạy Tesseract nhận diện từ Canvas vừa vẽ
+                            const { data: { text } } = await Tesseract.recognize(canvas, 'vie');
+                            pageText = text;
+                        }
+                        
                         fullText += pageText + '\n\n';
                     }
-                    // Đẩy dữ liệu vào textarea nhập liệu
+                    
                     document.getElementById('import-text').value = fullText.replace(/\n{3,}/g, '\n\n');
+                    
+                    if (usedOCR) {
+                        alert("✅ Đã dùng AI bóc tách thành công chữ từ file PDF Scan!\nDo máy quét ảnh nên có thể sai sót nhỏ về dấu câu, bạn hãy rà soát lại trước khi bấm Nhập nhé.");
+                    }
+                    
                 } catch (pdfErr) {
                     alert("Lỗi phân tích PDF: " + pdfErr.message);
                 } finally {
                     l.classList.add('hidden');
+                    loaderText.innerText = "Đang xử lý...";
                 }
             };
             reader.readAsArrayBuffer(f);
-        } else if (f.name.endsWith('.docx')) {
+            
+        } 
+        // TRƯỜNG HỢP 3: FILE WORD (.DOCX)
+        else if (f.name.endsWith('.docx')) {
             const reader = new FileReader();
             reader.onload = e => mammoth.extractRawText({ arrayBuffer: e.target.result }).then(r => {
                 document.getElementById('import-text').value = r.value;
                 l.classList.add('hidden');
             });
             reader.readAsArrayBuffer(f);
-        } else {
+        } 
+        // TRƯỜNG HỢP 4: FILE TXT BÌNH THƯỜNG
+        else {
             const reader = new FileReader();
             reader.onload = e => {
                 document.getElementById('import-text').value = e.target.result;
@@ -2015,6 +2071,7 @@ async function handleFileUpload(i) {
     } catch (err) {
         alert("Lỗi đọc file: " + err.message);
         l.classList.add('hidden');
+        loaderText.innerText = "Đang xử lý...";
     }
 }
         // --- CHÈN LẠI HÀM processImport MẠNH MẼ CỦA V4 VÀO ĐÂY ---
