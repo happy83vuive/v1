@@ -287,12 +287,13 @@ body {
         100% { transform: rotate(5deg); }
     }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
-        // Cấu hình worker cho PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        window.pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+        if(window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+        }
     </script>
-
 </head>
 <body class="bg-bgLight text-slate-800 min-h-screen font-sans pb-24 selection:bg-red-200 selection:text-red-700 tet-pattern">
 
@@ -1937,7 +1938,16 @@ function renderExamsInSubject(subjectName) {
     ${imgHTML}
     <textarea class="w-full p-4 bg-slate-50 border border-slate-100 rounded-xl text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none transition min-h-[80px] resize-y placeholder-slate-400" rows="2" placeholder="Nội dung câu hỏi..." oninput="editorQuestions[${i}].text=this.value" onpaste="handlePaste(event, ${i})">${q.text}</textarea>
 `; if(q.type === 'fb') contentHtml += `<p class="text-[10px] text-slate-400 mt-2 italic flex items-center gap-1"><i data-lucide="info" width="12"></i> Mẹo: Dùng [đáp án] để tạo ô điền từ.</p>`; let answersHtml = ''; if (q.type === 'tf') { answersHtml += `<div class="mt-4 space-y-2">`; q.items.forEach((it, ix) => { answersHtml += `<div class="grid grid-cols-12 gap-2 items-center bg-slate-50/50 p-2 rounded-lg border border-transparent hover:border-slate-200 transition"><div class="col-span-8 flex gap-2"><span class="font-black text-slate-300 w-4 text-xs pt-1.5">${String.fromCharCode(97 + ix)}</span><input class="flex-1 bg-transparent border-b border-transparent focus:border-primary outline-none text-sm font-medium" value="${it.text}" placeholder="Nhập ý..." oninput="editorQuestions[${i}].items[${ix}].text=this.value"></div><div class="col-span-2 text-center"><input type="radio" name="tf_${i}_${ix}" class="tf-radio accent-emerald-500 w-4 h-4" ${it.isTrue?'checked':''} onclick="editorQuestions[${i}].items[${ix}].isTrue=true"></div><div class="col-span-2 text-center"><input type="radio" name="tf_${i}_${ix}" class="tf-radio accent-rose-500 w-4 h-4" ${!it.isTrue?'checked':''} onclick="editorQuestions[${i}].items[${ix}].isTrue=false"></div></div>`; }); answersHtml += '</div>'; } else if (q.type !== 'fb') { answersHtml += '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">'; q.options.forEach((o, oi) => { answersHtml += `<div class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl ${q.correct==oi?'bg-indigo-50 border-indigo-400 ring-1 ring-indigo-400':''} transition group/opt"><div class="relative"><input type="radio" name="q${i}" ${q.correct==oi?'checked':''} onclick="editorQuestions[${i}].correct=${oi};renderEditorQuestions()" class="w-5 h-5 accent-primary cursor-pointer peer"></div><input class="flex-1 bg-transparent outline-none text-sm font-medium text-slate-700 placeholder-slate-400" value="${o}" placeholder="Đáp án ${String.fromCharCode(65+oi)}" oninput="editorQuestions[${i}].options[${oi}]=this.value"></div>`; }); answersHtml += '</div>'; } d.innerHTML = headerHtml + contentHtml + answersHtml; c.appendChild(d); }); lucide.createIcons(); }
-        function editorAddQuestion(t, insertAfterIndex = -1) { let newQ = (t === 'tf') ? {type: 'tf', text: '', image: '', items: [{text: '', isTrue: true}, {text: '', isTrue: false}, {text: '', isTrue: false}, {text: '', isTrue: true}]} : (t === 'fb' ? {type: 'fb', text: '', image: ''} : {type: 'mc', text: '', image: '', options: ['', '', '', ''], correct: 0}); if (insertAfterIndex > -1) editorQuestions.splice(insertAfterIndex + 1, 0, newQ); else editorQuestions.push(newQ); renderEditorQuestions(); }
+       function editorAddQuestion(t, insertAfterIndex = -1) { 
+    let newQ = (t === 'tf') 
+        ? {type: 'tf', passage: '', text: '', image: '', items: [{text: '', isTrue: true}, {text: '', isTrue: false}, {text: '', isTrue: false}, {text: '', isTrue: true}]} 
+        : (t === 'fb' 
+            ? {type: 'fb', passage: '', text: '', image: ''} 
+            : {type: 'mc', passage: '', text: '', image: '', options: ['', '', '', ''], correct: 0}); 
+    if (insertAfterIndex > -1) editorQuestions.splice(insertAfterIndex + 1, 0, newQ); 
+    else editorQuestions.push(newQ); 
+    renderEditorQuestions(); 
+}
         function deleteQuestion(index) { if(confirm("Xóa câu này?")) { editorQuestions.splice(index, 1); renderEditorQuestions(); } }
         function changeQuestionType(i,t) { const q=editorQuestions[i]; if(q.type===t)return; if(t==='tf') editorQuestions[i]={type:'tf',text:q.text, image:q.image, items:[{text:'',isTrue:true},{text:'',isTrue:false},{text:'',isTrue:false},{text:'',isTrue:true}]}; else if(t==='fb') editorQuestions[i]={type:'fb',text:q.text, image:q.image}; else editorQuestions[i]={type:'mc',text:q.text, image:q.image, options:['','','',''],correct:0}; renderEditorQuestions(); }
         function removeQImage(qIdx) { delete editorQuestions[qIdx].image; renderEditorQuestions(); }
@@ -1950,23 +1960,41 @@ async function handleFileUpload(i) {
     if (!f) return;
     
     const l = document.getElementById('global-loader');
-    l.classList.remove('hidden'); // Hiện loading khi đọc file nặng
+    l.classList.remove('hidden');
 
     try {
         if (f.name.endsWith('.pdf')) {
+            const pdfjs = window['pdfjs-dist/build/pdf'] || window.pdfjsLib;
             const reader = new FileReader();
             reader.onload = async (e) => {
-                const typedarray = new Uint8Array(e.target.result);
-                const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
-                let fullText = '';
-                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-                    const page = await pdf.getPage(pageNum);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    fullText += pageText + '\n';
+                try {
+                    const typedarray = new Uint8Array(e.target.result);
+                    const pdf = await pdfjs.getDocument({ data: typedarray }).promise;
+                    let fullText = '';
+                    
+                    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                        const page = await pdf.getPage(pageNum);
+                        const textContent = await page.getTextContent();
+                        
+                        // Ghép text thông minh dựa trên tọa độ Y để giữ nguyên xuống dòng
+                        let lastY = -1;
+                        let pageText = '';
+                        textContent.items.forEach(item => {
+                            if (lastY !== -1 && Math.abs(lastY - item.transform[5]) > 5) {
+                                pageText += '\n'; // Xuống dòng nếu lệch tọa độ
+                            }
+                            pageText += item.str;
+                            lastY = item.transform[5];
+                        });
+                        fullText += pageText + '\n\n';
+                    }
+                    // Đẩy dữ liệu vào textarea nhập liệu
+                    document.getElementById('import-text').value = fullText.replace(/\n{3,}/g, '\n\n');
+                } catch (pdfErr) {
+                    alert("Lỗi phân tích PDF: " + pdfErr.message);
+                } finally {
+                    l.classList.add('hidden');
                 }
-                document.getElementById('import-text').value = fullText;
-                l.classList.add('hidden');
             };
             reader.readAsArrayBuffer(f);
         } else if (f.name.endsWith('.docx')) {
@@ -1997,175 +2025,151 @@ async function handleFileUpload(i) {
         }
 
         function processImport() {
-            let text = document.getElementById('import-text').value;
-            if (!text.trim()) return alert("Vui lòng nhập nội dung đề thi!");
+    let text = document.getElementById('import-text').value;
+    if (!text.trim()) return alert("Vui lòng nhập nội dung đề thi!");
 
-            // 1. LÀM SẠCH CƠ BẢN
-            text = text.replace(/\u00A0/g, ' ').replace(/[\r\t]/g, ' ').trim();
-            // Xóa cụm từ gây nhiễu
-            text = text.replace(/Chọn một đáp án đúng/gi, "\n");
+    // 1. LÀM SẠCH CƠ BẢN
+    text = text.replace(/\u00A0/g, ' ').replace(/[\r\t]/g, ' ').trim();
+    text = text.replace(/Chọn một đáp án đúng/gi, "\n");
 
-            // ============================================================
-            // 2. CƯỠNG ÉP XUỐNG DÒNG (UN-GLUE) - LOGIC TÁCH BIỆT
-            // ============================================================
+    // 2. CƯỠNG ÉP XUỐNG DÒNG (UN-GLUE)
+    text = text.replace(/([^\n])\s*((?:Câu|Question|Bài|CS|Part|Bài\s*tập)\s*\d+\s*[\.\:\)])/gi, "$1\n$2");
+    text = text.replace(/([\.\?\!]|^)\s*(\d+[\.\:\)]\s+)(?=[A-ZÀ-Ỹ])/gm, "$1\n$2");
+    text = text.replace(/([^\n])\s+(\*?[A-D]\s*[\.\:])\s+/g, "$1\n$2 ");
+    text = text.replace(/([\.\?\!\)\}\>])(\*?[A-D]\s*[\.\:])\s+/g, "$1\n$2 ");
+    text = text.replace(/([^\n])\s+(\*?[a-d]\s*[\)])\s+/g, "$1\n$2 ");
 
-            // 2.1 Tách Câu hỏi (Câu 1: ...)
-            text = text.replace(/([^\n])\s*((?:Câu|Question|Bài|CS|Part|Bài\s*tập)\s*\d+\s*[\.\:\)])/gi, "$1\n$2");
-            
-            // 2.2 Tách Câu hỏi dạng số trần (1. 2.)
-            text = text.replace(/([\.\?\!]|^)\s*(\d+[\.\:\)]\s+)(?=[A-ZÀ-Ỹ])/gm, "$1\n$2");
+    // 3. PHÂN TÍCH TỪNG DÒNG
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    const questions = [];
+    let currentQ = null;
+    
+    // LOGIC CHO ĐGNL V-ACT
+    let currentPassage = '';
+    let isReadingPassage = false;
 
-            // 2.3 Tách Đáp án TRẮC NGHIỆM (Chỉ A. B. C. D. in hoa)
-            // Regex: [A-D] in hoa + dấu chấm hoặc hai chấm
-            text = text.replace(/([^\n])\s+(\*?[A-D]\s*[\.\:])\s+/g, "$1\n$2 ");
-            text = text.replace(/([\.\?\!\)\}\>])(\*?[A-D]\s*[\.\:])\s+/g, "$1\n$2 ");
+    const startQRegex = /^(?:Câu|Question|Bài|CS|Part|Bài\s*tập)?\s*(\d+)\s*[\.\:\)]/i;
+    const mcRegex = /^(\*?)\s*([A-D])\s*[\.\:]\s*(.*)/;
+    const tfRegex = /^(\*?)\s*([a-d])\s*[\)]\s*(.*)/;
 
-            // 2.4 Tách Ý ĐÚNG/SAI (Chỉ a) b) c) d) in thường)
-            // Regex: [a-d] thường + dấu đóng ngoặc )
-            text = text.replace(/([^\n])\s+(\*?[a-d]\s*[\)])\s+/g, "$1\n$2 ");
-
-            // ============================================================
-            // 3. PHÂN TÍCH TỪNG DÒNG
-            // ============================================================
-            
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-            const questions = [];
-            let currentQ = null;
-
-            // Regex nhận diện
-            const startQRegex = /^(?:Câu|Question|Bài|CS|Part|Bài\s*tập)?\s*(\d+)\s*[\.\:\)]/i;
-            
-            // Regex Trắc nghiệm: Bắt buộc A-D in hoa + chấm/hai chấm (A. hoặc A:)
-            const mcRegex = /^(\*?)\s*([A-D])\s*[\.\:]\s*(.*)/;
-            
-            // Regex Đúng Sai: Bắt buộc a-d thường + đóng ngoặc (a) hoặc b))
-            const tfRegex = /^(\*?)\s*([a-d])\s*[\)]\s*(.*)/;
-
-            lines.forEach((line, index) => {
-                const qMatch = line.match(startQRegex);
-                const mcMatch = line.match(mcRegex);
-                const tfMatch = line.match(tfRegex);
-
-                // --- TRƯỜNG HỢP 1: BẮT ĐẦU CÂU HỎI MỚI ---
-                if (qMatch && !mcMatch && !tfMatch) {
-                    if (currentQ) questions.push(currentQ);
-
-                    let cleanText = line.replace(startQRegex, '').trim();
-                    cleanText = cleanText.replace(/Chọn một đáp án đúng/gi, "").trim();
-                    cleanText = escapeHtml(cleanText);
-
-                    if (!cleanText && index < lines.length - 1) {
-                        const nextLine = lines[index+1];
-                        if (!nextLine.match(startQRegex) && !nextLine.match(mcRegex) && !nextLine.match(tfRegex)) {
-                            // Dòng sau là text
-                        }
-                    }
-
-                    // Mặc định tạo là MC, nếu gặp a) b) thì sẽ switch sang TF sau
-                    currentQ = {
-                        type: 'mc', 
-                        text: cleanText, 
-                        image: '', 
-                        options: [], 
-                        tempOpts: { A: "", B: "", C: "", D: "" }, 
-                        items: [], // Dành cho TF
-                        correct: 0 
-                    };
-                } 
-                else if (currentQ) {
-                    // --- TRƯỜNG HỢP 2: LÀ ĐÁP ÁN TRẮC NGHIỆM (A. B. C. D.) ---
-                    if (mcMatch) {
-                        currentQ.type = 'mc'; // Khẳng định là MC
-                        
-                        let isStar = mcMatch[1] === '*';
-                        let label = mcMatch[2].toUpperCase(); // A
-                        let content = mcMatch[3].trim();
-                        content = escapeHtml(content);
-
-                        let isCorrect = isStar;
-                        if (content.startsWith('*')) { isCorrect = true; content = content.substring(1).trim(); }
-                        if (/\((?:Đúng|Correct)\)$/i.test(content)) { isCorrect = true; content = content.replace(/\((?:Đúng|Correct)\)$/i, '').trim(); }
-                        
-                        let idx = label.charCodeAt(0) - 65;
-                        if (idx >= 0 && idx <= 3) {
-                            currentQ.tempOpts[label] = content;
-                            if (isCorrect) currentQ.correct = idx;
-                        }
-                    } 
-                    // --- TRƯỜNG HỢP 3: LÀ Ý ĐÚNG/SAI (a) b) c) d)) ---
-                    else if (tfMatch) {
-                        currentQ.type = 'tf'; // Chuyển hệ sang TF ngay
-                        
-                        let label = tfMatch[2].toLowerCase(); // a
-                        let content = tfMatch[3].trim();
-                        let isTrue = false;
-
-                        // Check từ khóa đúng/sai cuối câu
-                        if (/[\(–-]\s*[ĐD](?:úng)?\)?$/i.test(content)) { isTrue = true; content = content.replace(/[\(–-]\s*[ĐD](?:úng)?\)?$/i, '').trim(); }
-                        if (/[\(–-]\s*[S](?:ai)?\)?$/i.test(content)) { isTrue = false; content = content.replace(/[\(–-]\s*[S](?:ai)?\)?$/i, '').trim(); }
-                        if (tfMatch[1] === '*') isTrue = true;
-
-                        content = escapeHtml(content);
-
-                        // Thêm vào mảng items của TF
-                        currentQ.items.push({ text: content, isTrue: isTrue });
-                    }
-                    // --- TRƯỜNG HỢP 4: NỘI DUNG NỐI TIẾP ---
-                    else {
-                        const safeLine = escapeHtml(line);
-                        
-                        if (currentQ.type === 'mc') {
-                            // Logic nối dòng cho MC
-                            const hasOpts = currentQ.tempOpts.A || currentQ.tempOpts.B;
-                            if (!hasOpts) {
-                                currentQ.text += (currentQ.text ? "\n" : "") + safeLine;
-                            } else {
-                                // Nối vào option gần nhất
-                                let lastKey = 'A';
-                                if (currentQ.tempOpts.D) lastKey = 'D';
-                                else if (currentQ.tempOpts.C) lastKey = 'C';
-                                else if (currentQ.tempOpts.B) lastKey = 'B';
-                                currentQ.tempOpts[lastKey] += " " + safeLine;
-                            }
-                        } else if (currentQ.type === 'tf') {
-                            // Logic nối dòng cho TF
-                            if (currentQ.items.length === 0) {
-                                currentQ.text += (currentQ.text ? "\n" : "") + safeLine;
-                            } else {
-                                // Nối vào item cuối cùng
-                                currentQ.items[currentQ.items.length - 1].text += " " + safeLine;
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (currentQ) questions.push(currentQ);
-
-            if (questions.length === 0) return alert("⚠️ Không nhận diện được câu hỏi nào.");
-
-            // Chuẩn hóa dữ liệu đầu ra
-            const finalQuestions = questions.map(q => {
-                if (q.type === 'mc') {
-                    const opts = [
-                        q.tempOpts.A || "...", q.tempOpts.B || "...", q.tempOpts.C || "...", q.tempOpts.D || "..."
-                    ];
-                    return { type: 'mc', text: q.text, image: '', options: opts, correct: q.correct || 0 };
-                } else {
-                    // Nếu là TF, đảm bảo đủ 4 items (nếu thiếu thì fill rỗng)
-                    while(q.items.length < 4) {
-                        q.items.push({text: "...", isTrue: false});
-                    }
-                    return { type: 'tf', text: q.text, image: '', items: q.items.slice(0, 4) };
-                }
-            });
-
-            editorQuestions = [...editorQuestions, ...finalQuestions];
-            renderEditorQuestions();
-            document.getElementById('import-modal').classList.add('hidden');
-            document.getElementById('import-text').value = '';
-            alert(`✅ Đã nhập thành công: ${finalQuestions.length} câu!`);
+    lines.forEach((line, index) => {
+        // Mở bài đọc chùm
+        if (line.toUpperCase().includes('[BÀI ĐỌC]') || /Dựa vào (thông tin|tư liệu|đoạn văn|đoạn trích)/i.test(line)) {
+            isReadingPassage = true;
+            currentPassage = line.replace(/\[BÀI ĐỌC\]/gi, '').trim() + "\n";
+            return;
         }
+        // Đóng bài đọc chùm (nếu có)
+        if (line.toUpperCase().includes('[HẾT BÀI ĐỌC]')) {
+            isReadingPassage = false;
+            currentPassage = '';
+            return;
+        }
+
+        const qMatch = line.match(startQRegex);
+        const mcMatch = line.match(mcRegex);
+        const tfMatch = line.match(tfRegex);
+
+        if (qMatch && !mcMatch && !tfMatch) {
+            if (currentQ) questions.push(currentQ);
+            isReadingPassage = false; // Ngừng thu thập dòng vào đoạn văn khi bắt đầu câu hỏi
+
+            let cleanText = line.replace(startQRegex, '').trim();
+            cleanText = cleanText.replace(/Chọn một đáp án đúng/gi, "").trim();
+            cleanText = escapeHtml(cleanText);
+
+            currentQ = {
+                type: 'mc', 
+                text: cleanText, 
+                passage: currentPassage.trim(), // Gắn đoạn văn chung vào câu hỏi
+                image: '', 
+                options: [], 
+                tempOpts: { A: "", B: "", C: "", D: "" }, 
+                items: [], 
+                correct: 0 
+            };
+        } 
+        else if (currentQ) {
+            if (mcMatch) {
+                currentQ.type = 'mc';
+                let isStar = mcMatch[1] === '*';
+                let label = mcMatch[2].toUpperCase(); 
+                let content = mcMatch[3].trim();
+                content = escapeHtml(content);
+
+                let isCorrect = isStar;
+                if (content.startsWith('*')) { isCorrect = true; content = content.substring(1).trim(); }
+                if (/\((?:Đúng|Correct)\)$/i.test(content)) { isCorrect = true; content = content.replace(/\((?:Đúng|Correct)\)$/i, '').trim(); }
+                
+                let idx = label.charCodeAt(0) - 65;
+                if (idx >= 0 && idx <= 3) {
+                    currentQ.tempOpts[label] = content;
+                    if (isCorrect) currentQ.correct = idx;
+                }
+            } 
+            else if (tfMatch) {
+                currentQ.type = 'tf';
+                let label = tfMatch[2].toLowerCase(); 
+                let content = tfMatch[3].trim();
+                let isTrue = false;
+
+                if (/[\(–-]\s*[ĐD](?:úng)?\)?$/i.test(content)) { isTrue = true; content = content.replace(/[\(–-]\s*[ĐD](?:úng)?\)?$/i, '').trim(); }
+                if (/[\(–-]\s*[S](?:ai)?\)?$/i.test(content)) { isTrue = false; content = content.replace(/[\(–-]\s*[S](?:ai)?\)?$/i, '').trim(); }
+                if (tfMatch[1] === '*') isTrue = true;
+
+                content = escapeHtml(content);
+                currentQ.items.push({ text: content, isTrue: isTrue });
+            }
+            else {
+                const safeLine = escapeHtml(line);
+                if (currentQ.type === 'mc') {
+                    const hasOpts = currentQ.tempOpts.A || currentQ.tempOpts.B;
+                    if (!hasOpts) {
+                        currentQ.text += (currentQ.text ? "\n" : "") + safeLine;
+                    } else {
+                        let lastKey = 'A';
+                        if (currentQ.tempOpts.D) lastKey = 'D';
+                        else if (currentQ.tempOpts.C) lastKey = 'C';
+                        else if (currentQ.tempOpts.B) lastKey = 'B';
+                        currentQ.tempOpts[lastKey] += " " + safeLine;
+                    }
+                } else if (currentQ.type === 'tf') {
+                    if (currentQ.items.length === 0) {
+                        currentQ.text += (currentQ.text ? "\n" : "") + safeLine;
+                    } else {
+                        currentQ.items[currentQ.items.length - 1].text += " " + safeLine;
+                    }
+                }
+            }
+        } else if (isReadingPassage) {
+            // Đang đọc bài đọc chùm, ghi nhận từng dòng
+            currentPassage += escapeHtml(line) + "\n";
+        }
+    });
+
+    if (currentQ) questions.push(currentQ);
+    if (questions.length === 0) return alert("⚠️ Không nhận diện được câu hỏi nào.");
+
+    const finalQuestions = questions.map(q => {
+        if (q.type === 'mc') {
+            const opts = [
+                q.tempOpts.A || "...", q.tempOpts.B || "...", q.tempOpts.C || "...", q.tempOpts.D || "..."
+            ];
+            return { type: 'mc', passage: q.passage, text: q.text, image: '', options: opts, correct: q.correct || 0 };
+        } else {
+            while(q.items.length < 4) {
+                q.items.push({text: "...", isTrue: false});
+            }
+            return { type: 'tf', passage: q.passage, text: q.text, image: '', items: q.items.slice(0, 4) };
+        }
+    });
+
+    editorQuestions = [...editorQuestions, ...finalQuestions];
+    renderEditorQuestions();
+    document.getElementById('import-modal').classList.add('hidden');
+    document.getElementById('import-text').value = '';
+    alert(`✅ Đã nhập thành công: ${finalQuestions.length} câu!`);
+}
         
         function toggleAccessList() { const v=document.getElementById('input-status').value; document.getElementById('access-list-container').className = v==='restricted'?'block pt-3 border-t':'hidden pt-3 border-t'; if(v==='restricted') renderAccessCheckboxes(); }
         function renderAccessCheckboxes(sIds = []) { const c = document.getElementById('student-checkbox-list'); c.innerHTML = ''; if(allStudents.length===0) c.innerHTML='<p class="text-xs italic">Không có học sinh</p>'; allStudents.forEach(s => { c.innerHTML += `<div class="flex items-center gap-2 p-1"><input type="checkbox" value="${s.id}" class="acc-check w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" ${sIds.includes(s.id)?'checked':''}> <span class="truncate">${s.email}</span></div>`; }); }
